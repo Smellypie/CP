@@ -20,7 +20,10 @@ def errRel(T):
 		return 0
 
 def adjust(I, T): #TODO funcao para ajustar os intervalos
-	pass
+	meanT = (T[0] + T[1] + T[2] + T[3])/4
+	
+	for i in range(1,5):
+		I[i] = ((I[i] - I[i-1]) * meanT)/T[i-1]
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -48,7 +51,6 @@ if(rank == 0):
 			Hits += Op
 		
 		print('pi =', 4*(Hits/n**2))
-		print(T, errRel(T))
 		
 		adjust(I, T)
 
@@ -64,6 +66,7 @@ else:
 		Hits = doStuff(I[rank], I[rank + 1], n)
 		comm.send(time.time() - init, 0)
 		comm.send(Hits, 0)
+
 
 
 

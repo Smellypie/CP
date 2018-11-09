@@ -13,20 +13,20 @@ def doStuff(inf, sup, n):
 				break
 	return hits
 
-def errRel(T):
-	if max(T) != 0:
-		return (max(T)-min(T))/max(T)
-	else:
-		return 0
 
-def adjust(I, T): #TODO funcao para ajustar os intervalos
+def adjust(I, T):
 	meanT = (T[0] + T[1] + T[2] + T[3])/4
 	
-	for i in range(1,5):
-		I[i] = ((I[i] - I[i-1]) * meanT)/T[i-1]
+	for i in range(1,4):
+		if T[i-1] < T[i]:
+			I[i] = ((I[i] - I[i-1]) * 1.1) + I[i-1]
+		else:
+			I[i] = ((I[i] - I[i-1]) * 0.9) + I[i-1]
+		
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
+upperB = 2**30
 I = [0, 1/4, 1/2, 3/4, 1]
 
 if(rank == 0):
@@ -36,7 +36,7 @@ if(rank == 0):
 
 	print('Number of processes:', p)
 	
-	while errRel(T) > 0.001:
+	while n <= upperB:
 		for i in range(1, p):
 			comm.send(1, i)
 		
@@ -50,13 +50,14 @@ if(rank == 0):
 			Op = comm.recv(source=i)
 			Hits += Op
 		
-		print('pi =', 4*(Hits/n**2))
-		
 		adjust(I, T)
+		n *= 2
 
 	for i in range(1, p):
 		comm.send(0, i)
-		
+	
+	print(I)
+	print('pi =', 4*(Hits/n**2))
 	print('Done')
 
 else:

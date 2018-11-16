@@ -5,12 +5,13 @@ import sys
 
 def doStuff(inf, sup, n):
 	hits = 0
-	for i in range(int(n*inf), int(n*sup)):
+	for i in range(int(n*inf) + 1, int(n*sup)):
 		for j in range(0, n):
 			if sqrt(i**2 + j**2) < n:
 				hits += 1
 			else:
 				break
+	
 	return hits
 
 
@@ -30,13 +31,13 @@ p = MPI.COMM_WORLD.Get_size()
 n = int(sqrt(int(sys.argv[1])))
 I = [0, 1/4, 1/2, 3/4, 1]
 T = [1, 0, 0, 0]
-upperB = 2**30
+upperB = 2**15
 
 
 if rank == 0:
 	print('Number of processes:', p)
 
-while n <= 64*2048:
+while n <= upperB:
 	
 	init = time.time()
 	Hits = doStuff(I[rank], I[rank + 1], n)
@@ -44,13 +45,13 @@ while n <= 64*2048:
 	
 	Op = comm.gather(Hits, root = 0)
 	
-	if rank == 0:
+	if rank == 0:		
 		Hits = sum(Op[i] for i in range(4))
 		adjust(I, T)
 		n *= 2
 
 	n = comm.bcast(n, root = 0)
-	Hits = comm.bcast(Hits, root = 0)
+	I = comm.bcast(I, root = 0)
 	
 
 if rank == 0:
